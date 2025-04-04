@@ -54,6 +54,23 @@ class UserDatabaseService {
       rethrow;
     }
   }
+  Future<bool> isUserAdmin(String uid) async {
+    try {
+      DocumentSnapshot? doc = await getUserData(uid);
+      if (doc != null && doc.exists) {
+        // Check if the 'isAdmin' field exists and is true
+        // Use `doc.data() as Map<String, dynamic>` for type safety
+        final data = doc.data() as Map<String, dynamic>?; // Cast to map
+        // Use .get('fieldName') which can return null, or check data directly
+        return data?['isAdmin'] == true; // Returns false if field doesn't exist or is not true
+      }
+      return false; // User document doesn't exist
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error checking admin status: $e");
+      }
+      return false; // Return false on error
+    }
+  }
 
-// Add other user-specific database methods here (e.g., get workouts, diet plans)
 }
