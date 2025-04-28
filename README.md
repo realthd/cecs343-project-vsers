@@ -1,16 +1,22 @@
-# vsers
+# Fitness App
 
-A new Flutter project.
+## Description
+This is a fitness tracking app that allows users to track their workouts and diet, view insights, and manage their settings.
 
-## Getting Started
+## Features
+- **Track Workouts**: Add workouts with details like name and duration.
+- **View Past Workouts**: View your workout history and progress.
+- **Diet Tracking**: Track your meals, including calories, protein, carbs, and fats.
+- **Insights**: See your weekly fitness progress and consistency.
+- **User Settings**: Customize your profile and preferences.
 
-This project is a starting point for a Flutter application.
+## Setup
 
-A few resources to get you started if this is your first Flutter project:
+### Requirements
+- Flutter SDK (version 2.0 or higher)
+- Firebase Project with Firestore enabled
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/fitness-app.git
