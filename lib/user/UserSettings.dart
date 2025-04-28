@@ -1,10 +1,24 @@
+/// A Flutter widget module that provides user profile settings and preferences, 
+/// including account management, notifications, privacy controls, theme options, and logout.
+/// 
 import 'package:flutter/material.dart';
-
-/// Displays settings and preferences for the user profile,
-/// including account management, notifications, privacy, and theme options.
+/// A stateless widget that displays a list of settings options for the user profile.
+/// 
+/// Attributes:
+/// - key: An optional unique identifier for the widget.
 class UserSettings extends StatelessWidget {
   const UserSettings({super.key});
-
+/// Builds the UI for the UserSettings screen.
+  /// 
+  /// Args:
+  /// - context (BuildContext): The context in which the widget is built.
+  /// 
+  /// Returns:
+  /// - Widget: A Scaffold containing a list of user settings options.
+  /// 
+  /// Summary:
+  /// Constructs a list view of user settings categories such as account, notifications,
+  /// privacy, theme, and logout, and returns the assembled Scaffold widget.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
