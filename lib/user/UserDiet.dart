@@ -1,8 +1,25 @@
+/// A Flutter widget for displaying a user's daily diet summary, 
+/// including calorie intake, macronutrient breakdown, and a list of meals.
+///
 import 'package:flutter/material.dart';
+
+/// A stateless widget that shows a user's diet summary for the day.
+/// Attributes:
+/// - key: An optional unique identifier for the widget.
 
 class UserDiet extends StatelessWidget {
   const UserDiet({super.key});
-
+  /// Builds the UI for the UserDiet screen.
+  /// 
+  /// Args:
+  /// - context (BuildContext): The context in which the widget is built.
+  /// 
+  /// Returns:
+  /// - Widget: A Scaffold containing the diet overview UI elements.
+  /// 
+  /// Summary:
+  /// Constructs the main layout including today's summary, macronutrients,
+  /// and today's meals, and returns the assembled Scaffold widget.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
