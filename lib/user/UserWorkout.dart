@@ -1,6 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+/// A class representing a workout goal.
+/// Contains the name, target (e.g., calories or distance), and deadline of the goal.
+class WorkoutGoal {
+  final String name;
+  final String target;  // E.g., "Burn 500 calories" or "Run 5km"
+  final DateTime deadline;
+
+  WorkoutGoal({
+    required this.name,
+    required this.target,
+    required this.deadline,
+  });
+}
+
 class UserWorkout extends StatefulWidget {
   const UserWorkout({super.key});
 
@@ -12,7 +26,12 @@ class _UserWorkoutState extends State<UserWorkout> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _durationController = TextEditingController();
+  final _goalNameController = TextEditingController();
+  final _goalTargetController = TextEditingController();
   String? _errorMessage;
+
+  // New: list of workout goals for the user
+  List<WorkoutGoal> workoutGoals = [];
 
   // Function to retrieve past workouts from Firestore
   Future<List<Map<String, dynamic>>> _getWorkouts() async {
@@ -25,16 +44,36 @@ class _UserWorkoutState extends State<UserWorkout> {
     }
   }
 
-  // Function to save a new workout
+  // Function to save a new workout (including workout goals)
   void _saveWorkout() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        // Add workout goal to the list (if present)
+        if (_goalNameController.text.isNotEmpty && _goalTargetController.text.isNotEmpty) {
+          workoutGoals.add(WorkoutGoal(
+            name: _goalNameController.text,
+            target: _goalTargetController.text,
+            deadline: DateTime.now().add(Duration(days: 7)), // Example: Deadline set to 7 days later
+          ));
+        }
+
+        // Save workout data along with workout goals
         final workout = {
           'name': _nameController.text,
           'duration': int.parse(_durationController.text),
           'date': DateTime.now(),
+          'goals': workoutGoals.map((goal) {
+            return {
+              'name': goal.name,
+              'target': goal.target,
+              'deadline': goal.deadline,
+            };
+          }).toList(),
         };
+
+        // Save to Firestore
         await FirebaseFirestore.instance.collection('workouts').add(workout);
+
         setState(() {
           _errorMessage = null; // Clear any previous error messages
         });
@@ -62,6 +101,7 @@ class _UserWorkoutState extends State<UserWorkout> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Workout Name Field
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Workout Name'),
@@ -72,6 +112,8 @@ class _UserWorkoutState extends State<UserWorkout> {
                       return null;
                     },
                   ),
+
+                  // Workout Duration Field
                   TextFormField(
                     controller: _durationController,
                     decoration: const InputDecoration(labelText: 'Duration (minutes)'),
@@ -85,6 +127,8 @@ class _UserWorkoutState extends State<UserWorkout> {
                       return null;
                     },
                   ),
+
+                  // Error message display
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 10),
                     Text(
@@ -92,6 +136,8 @@ class _UserWorkoutState extends State<UserWorkout> {
                       style: const TextStyle(color: Colors.red),
                     ),
                   ],
+
+                  // Save Workout Button
                   ElevatedButton(
                     onPressed: _saveWorkout,
                     child: const Text('Save Workout'),
@@ -99,7 +145,20 @@ class _UserWorkoutState extends State<UserWorkout> {
                 ],
               ),
             ),
+
             const SizedBox(height: 20),
+
+            // Section to input workout goal details
+            TextField(
+              controller: _goalNameController,
+              decoration: const InputDecoration(labelText: 'Goal Name (e.g., Burn 500 calories)'),
+            ),
+            TextField(
+              controller: _goalTargetController,
+              decoration: const InputDecoration(labelText: 'Goal Target (e.g., 500 kcal or 5km)'),
+            ),
+            const SizedBox(height: 20),
+
             // Displaying list of past workouts
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _getWorkouts(),
@@ -118,9 +177,10 @@ class _UserWorkoutState extends State<UserWorkout> {
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final workout = snapshot.data![index];
+                      final goals = workout['goals'] as List<dynamic>? ?? [];
                       return ListTile(
                         title: Text(workout['name'] ?? 'No name'),
-                        subtitle: Text('Duration: ${workout['duration']} min'),
+                        subtitle: Text('Duration: ${workout['duration']} min\nGoals: ${goals.isNotEmpty ? goals.map((goal) => goal['name']).join(', ') : 'No goals'}'),
                         trailing: Text(workout['date'].toString()),
                       );
                     },
@@ -134,4 +194,3 @@ class _UserWorkoutState extends State<UserWorkout> {
     );
   }
 }
-

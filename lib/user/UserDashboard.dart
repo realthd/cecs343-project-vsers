@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'userHomepage.dart';
-import 'userWorkout.dart';
 import 'userDiet.dart';
 import 'userInsights.dart';
-import 'userSettings.dart';
 // Import userSubscriptions if it needs its own tab:
 // import 'userSubscriptions.dart';
 
