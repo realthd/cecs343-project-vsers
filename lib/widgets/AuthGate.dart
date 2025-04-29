@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:vsers/widgets/LoginPage.dart';
 import '../user/userDashboard.dart'; // Your main user screen after login
-import 'login_screen.dart'; // Your placeholder login screen
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
