@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vsers/user/UserWorkout.dart';
 import 'userHomepage.dart';
 import 'userDiet.dart';
 import 'userInsights.dart';
@@ -21,7 +22,7 @@ class _UserDashboardState extends State<UserDashboard> {
     UserWorkout(),  // Index 1
     UserDiet(),     // Index 2
     UserInsights(), // Index 3
-    UserSettings(), // Index 4 - Settings often makes sense here or in AppBar/Drawer
+    UserWorkout(), // Index 4 - Settings often makes sense here or in AppBar/Drawer
     // Add UserSubscriptions() here if it's a main tab
   ];
 
