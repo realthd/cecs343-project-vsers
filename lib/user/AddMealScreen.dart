@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../firebase/FoodService.dart';
 
+/// This screen allows users to add a meal, either by selecting from a list
+/// of preset foods or by creating a custom meal. It supports filtering meals
+/// by type (e.g., breakfast, lunch, dinner) and includes form validation.
 class AddMealScreen extends StatefulWidget {
   const AddMealScreen({super.key});
 
@@ -21,12 +24,8 @@ class _AddMealScreenState extends State<AddMealScreen> {
   List<Map<String, dynamic>> _presetFoods = [];
   bool _isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPresetFoods();
-  }
-
+  /// Loads the preset foods from the database. If loading fails, sample foods
+  /// are used as a fallback.
   Future<void> _loadPresetFoods() async {
     try {
       final foods = await _foodService.getPresetFoods();
@@ -44,6 +43,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
     }
   }
 
+  /// Filters the preset foods based on the selected filter.
+  ///
+  /// Returns a list of foods that match the selected filter. If 'all' is
+  /// selected, all foods are returned.
+  ///
+  /// Args:
+  ///   None.
+  ///
+  /// Returns:
+  ///   List<Map<String, dynamic>>: List of foods that match the filter.
   List<Map<String, dynamic>> _getFilteredFoods() {
     if (_selectedFilter == 'all') {
       return _presetFoods;
@@ -53,7 +62,13 @@ class _AddMealScreenState extends State<AddMealScreen> {
         .toList();
   }
 
-  // Helper method to get meal type icon
+  /// Returns an appropriate icon based on the given meal type.
+  ///
+  /// Args:
+  ///   mealType (String): The type of meal (e.g., 'breakfast', 'lunch').
+  ///
+  /// Returns:
+  ///   IconData: The corresponding icon for the meal type.
   IconData _getMealTypeIcon(String mealType) {
     print('Getting icon for meal type: $mealType'); // Debug log
     switch (mealType.toLowerCase()) {
@@ -81,6 +96,11 @@ class _AddMealScreenState extends State<AddMealScreen> {
     super.dispose();
   }
 
+  /// Displays a dialog for the user to add a custom meal.
+  ///
+  /// This dialog includes a form with fields for meal name, type, calories,
+  /// protein, carbs, and fat. If the form is valid, the custom meal is added
+  /// to the database.
   void _showCustomMealForm() {
     showDialog(
       context: context,
@@ -244,6 +264,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
     );
   }
 
+  /// Formats a DateTime object into a user-friendly string.
+  ///
+  /// Given a DateTime object, this function returns a string representing the
+  /// time elapsed since the given date in a human-readable format, such as
+  /// 'today', 'yesterday', or 'X days ago'.
+  ///
+  /// Args:
+  ///   date (DateTime): The date to format.
+  ///
+  /// Returns:
+  ///   String: A string representing the formatted date.
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
