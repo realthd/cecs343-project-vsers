@@ -525,3 +525,4 @@ class _AddMealScreenState extends State<AddMealScreen> {
     );
   }
 }
+
