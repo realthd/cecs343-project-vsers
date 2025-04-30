@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:vsers/widgets/LoginPage.dart';
-import '../user/userDashboard.dart'; // Your main user screen after login
+import 'package:vsers/authentication/LoginPage.dart';
+import 'package:vsers/components/workoutGoals.dart';
+import '../user/userDashboard.dart';
+import "package:vsers/components/globals.dart" as globals;
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -20,7 +22,7 @@ class AuthGate extends StatelessWidget {
         // You could potentially check user roles here from Firestore
         // and navigate to AdminDashboard if needed.
         // For now, we directly go to UserDashboard.
-        return const UserDashboard(); // Show main user dashboard
+        return !globals.isWorkoutGoalsSetup ? WorkoutGoalsPage() : UserDashboard();
       },
     );
   }

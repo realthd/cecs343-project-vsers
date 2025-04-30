@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vsers/admin/AdminDashboard.dart';
+import 'package:vsers/authentication/RegisterPage.dart';
 import 'package:vsers/firebase/Authentication.dart';
 import 'package:vsers/user/UserDashboard.dart';
-import 'package:vsers/widgets/RegisterPage.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vsers/admin/AdminDashboard.dart';
+import 'package:vsers/components/workoutGoals.dart';
 import 'package:vsers/firebase/Authentication.dart';
 import 'package:vsers/user/UserDashboard.dart';
-
+import "package:vsers/components/globals.dart" as globals;
 class SignupPage extends StatelessWidget {
   const SignupPage({Key? key}) : super(key: key);
 
@@ -229,7 +230,7 @@ class _RegisterFormState extends State<RegisterForm> {
                       } else {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => UserDashboard()),
+                          MaterialPageRoute(builder: (context) =>  globals.isWorkoutGoalsSetup ? UserDashboard(): WorkoutGoalsPage()),
                               (Route<dynamic> route) => false,
                         );
                       }
