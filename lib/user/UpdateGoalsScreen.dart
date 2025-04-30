@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
 import '../firebase/DietService.dart';
 
+/// Screen to update daily nutrition goals for the user.
+///
+/// This screen allows users to modify their daily goals for calories, protein, carbs, and fat. 
+/// The data is loaded from and saved to the backend via the `DietService`.
+/// 
+/// Attributes:
+/// - _formKey: A global key for the form state.
+/// - _caloriesController: Controller for the calories input field.
+/// - _proteinController: Controller for the protein input field.
+/// - _carbsController: Controller for the carbs input field.
+/// - _fatController: Controller for the fat input field.
+/// - _dietService: Service to interact with diet-related data.
+/// - _isLoading: Flag indicating whether the data is loading.
+/// - _currentGoals: Holds the current goals data retrieved from the backend.
 class UpdateGoalsScreen extends StatefulWidget {
   const UpdateGoalsScreen({super.key});
 
@@ -24,6 +38,13 @@ class _UpdateGoalsScreenState extends State<UpdateGoalsScreen> {
     _loadCurrentGoals();
   }
 
+  /// Loads the current diet goals from the backend.
+  /// 
+  /// Retrieves the current diet goals (calories, protein, carbs, and fat) from the backend 
+  /// using the `DietService` and populates the corresponding text controllers.
+  ///
+  /// Exceptions:
+  /// - Shows an error message if the goals cannot be loaded from the backend.
   Future<void> _loadCurrentGoals() async {
     try {
       final goals = await _dietService.getDietGoals();
@@ -57,6 +78,20 @@ class _UpdateGoalsScreenState extends State<UpdateGoalsScreen> {
     super.dispose();
   }
 
+  /// Saves the updated goals to the backend.
+  /// 
+  /// Validates the input fields, then saves the updated goals (calories, protein, carbs, and fat) 
+  /// using the `DietService`. On successful save, navigates back to the previous screen 
+  /// and shows a success message.
+  ///
+  /// Arguments:
+  /// - None
+  ///
+  /// Returns:
+  /// - Void. Navigates back and shows a success message upon success, or an error message upon failure.
+  ///
+  /// Exceptions:
+  /// - Shows an error message if there was an issue saving the goals.
   Future<void> _saveGoals() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
