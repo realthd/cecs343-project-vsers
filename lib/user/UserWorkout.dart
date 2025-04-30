@@ -8,6 +8,12 @@ class WorkoutGoal {
   final String target;  // E.g., "Burn 500 calories" or "Run 5km"
   final DateTime deadline;
 
+  /// Constructor for the WorkoutGoal class.
+  ///
+  /// Arguments:
+  /// - `name`: The name of the workout goal (e.g., "Burn 500 calories").
+  /// - `target`: The target for the goal (e.g., "500 kcal" or "5 km").
+  /// - `deadline`: The deadline by which the goal should be achieved.
   WorkoutGoal({
     required this.name,
     required this.target,
@@ -33,7 +39,13 @@ class _UserWorkoutState extends State<UserWorkout> {
   // New: list of workout goals for the user
   List<WorkoutGoal> workoutGoals = [];
 
-  // Function to retrieve past workouts from Firestore
+  /// Function to retrieve past workouts from Firestore.
+  ///
+  /// This function fetches all workout documents from Firestore and returns them as a list.
+  /// Each document is converted into a Map containing the workout data.
+  ///
+  /// Returns:
+  /// - A list of maps representing the workout data retrieved from Firestore.
   Future<List<Map<String, dynamic>>> _getWorkouts() async {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('workouts').get();
@@ -44,7 +56,14 @@ class _UserWorkoutState extends State<UserWorkout> {
     }
   }
 
-  // Function to save a new workout (including workout goals)
+  /// Function to save a new workout (including workout goals).
+  ///
+  /// This function validates the form, adds the user's goals (if any), and saves the
+  /// workout data to Firestore. The workout data includes the workout name, duration,
+  /// the current date, and any associated goals.
+  ///
+  /// Returns:
+  /// - Void. This function updates the Firestore collection with the new workout.
   void _saveWorkout() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
@@ -160,7 +179,7 @@ class _UserWorkoutState extends State<UserWorkout> {
             const SizedBox(height: 20),
 
             // Displaying list of past workouts
-            FutureBuilder<List<Map<String, dynamic>>>(
+            FutureBuilder<List<Map<String, dynamic>>>( 
               future: _getWorkouts(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
