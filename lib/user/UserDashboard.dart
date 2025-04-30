@@ -25,43 +25,64 @@ class UserDashboard extends StatefulWidget {
   State<UserDashboard> createState() => _UserDashboardState();
 }
 
-class _UserDashboardState extends State<UserDashboard> {
+class _UserDashboardState extends State<UserDashboard>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
-  final _userWorkout = UserWorkout();
+  late TabController _tabController;
+  final _userWorkoutKey = GlobalKey<UserWorkoutState>();
 
   /// Handles the tap event of a bottom navigation item.
-  ///
-  /// This function updates the `_selectedIndex` state to reflect the selected tab,
-  /// which in turn updates the displayed widget in the body of the screen.
-  ///
-  /// Arguments:
-  /// - `index`: The index of the tapped navigation item.
-  ///
-  /// Returns:
-  /// - Void. This function updates the state to reflect the new selected tab.
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _tabController.index = index;
     });
   }
 
-  static List<Widget> _widgetOptions = <Widget>[
-    UserHomepage(),
-    UserWorkout(),
-    UserDiet(),
-    UserInsights(),
-    UserSettings(),
-  ];
+  // List of widgets for each tab
+  late final List<Widget> _widgetOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.index != _selectedIndex) {
+        setState(() {
+          _selectedIndex = _tabController.index;
+        });
+      }
+    });
+    _widgetOptions = <Widget>[
+      const KeepAliveWrapper(child: UserHomepage()),
+      KeepAliveWrapper(child: UserWorkout(key: _userWorkoutKey)),
+      const KeepAliveWrapper(child: UserDiet()),
+      const KeepAliveWrapper(child: UserInsights()),
+      const KeepAliveWrapper(child: UserSettings()),
+    ];
+    debugPrint('UserDashboard: initState called');
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    debugPrint('UserDashboard: dispose called');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      body: TabBarView(
+        controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(), // Disable swipe
+        children: _widgetOptions,
       ),
       floatingActionButton: _selectedIndex == 1
           ? ValueListenableBuilder<Widget?>(
-        valueListenable: _userWorkout.fabNotifier,
+        valueListenable:
+        _userWorkoutKey.currentState?.fabNotifier ??
+            ValueNotifier(null),
         builder: (context, fab, child) => fab ?? const SizedBox.shrink(),
       )
           : null,
@@ -96,5 +117,27 @@ class _UserDashboardState extends State<UserDashboard> {
         type: BottomNavigationBarType.fixed,
       ),
     );
+  }
+}
+
+/// Wrapper to ensure each tab's widget is kept alive
+class KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+
+  const KeepAliveWrapper({super.key, required this.child});
+
+  @override
+  State<KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

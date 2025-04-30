@@ -17,17 +17,49 @@ class WorkoutGoal {
   });
 }
 
-class UserWorkout extends StatefulWidget {
-  UserWorkout({Key? key}) : super(key: key);
+/// Singleton to persist workout state in memory
+class WorkoutStatePersistor {
+  static final WorkoutStatePersistor _instance = WorkoutStatePersistor._internal();
+  factory WorkoutStatePersistor() => _instance;
+  WorkoutStatePersistor._internal();
 
-  /// Notifier to control the FAB externally
-  final ValueNotifier<Widget?> fabNotifier = ValueNotifier<Widget?>(null);
+  bool isWorkoutActive = false;
+  int timerSeconds = 0;
+  Map<String, List<bool>> completedSets = {};
+  int currentDay = 1;
 
-  @override
-  State<UserWorkout> createState() => _UserWorkoutState();
+  void saveState({
+    required bool isWorkoutActive,
+    required int timerSeconds,
+    required Map<String, List<bool>> completedSets,
+    required int currentDay,
+  }) {
+    this.isWorkoutActive = isWorkoutActive;
+    this.timerSeconds = timerSeconds;
+    this.completedSets = completedSets;
+    this.currentDay = currentDay;
+  }
+
+  void clearState() {
+    isWorkoutActive = false;
+    timerSeconds = 0;
+    completedSets = {};
+    currentDay = 1;
+  }
 }
 
-class _UserWorkoutState extends State<UserWorkout> {
+class UserWorkout extends StatefulWidget {
+  const UserWorkout({Key? key}) : super(key: key);
+
+  @override
+  State<UserWorkout> createState() => UserWorkoutState();
+}
+
+class UserWorkoutState extends State<UserWorkout>
+    with AutomaticKeepAliveClientMixin {
+  // Public fabNotifier to be accessed via GlobalKey
+  ValueNotifier<Widget?> fabNotifier = ValueNotifier<Widget?>(null);
+
   bool _isWorkoutActive = false;
   int _currentDay = 1;
   Map<String, dynamic>? _currentPlan;
@@ -39,15 +71,30 @@ class _UserWorkoutState extends State<UserWorkout> {
   String? _errorMessage;
 
   @override
+  bool get wantKeepAlive => true; // Keep state alive across tab switches
+
+  @override
   void initState() {
     super.initState();
+    // Restore state from persistor
+    final persistor = WorkoutStatePersistor();
+    _isWorkoutActive = persistor.isWorkoutActive;
+    _timerSeconds = persistor.timerSeconds;
+    _completedSets = persistor.completedSets;
+    _currentDay = persistor.currentDay;
+    if (_isWorkoutActive) {
+      _startTimer(); // Resume timer if workout was active
+    }
     _loadCurrentWorkoutPlan();
+    debugPrint(
+        'UserWorkoutState: initState called, isWorkoutActive=$_isWorkoutActive, timerSeconds=$_timerSeconds');
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    widget.fabNotifier.dispose();
+    fabNotifier.dispose();
+    debugPrint('UserWorkoutState: dispose called');
     super.dispose();
   }
 
@@ -56,7 +103,7 @@ class _UserWorkoutState extends State<UserWorkout> {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
-        widget.fabNotifier.value = null;
+        fabNotifier.value = null;
       });
 
       final user = FirebaseAuth.instance.currentUser;
@@ -67,11 +114,13 @@ class _UserWorkoutState extends State<UserWorkout> {
           .doc(user.uid)
           .get();
 
-      if (!userDoc.exists || !userDoc.data()!.containsKey('current_workout_plan')) {
+      if (!userDoc.exists ||
+          !userDoc.data()!.containsKey('current_workout_plan')) {
         throw Exception('No workout plan selected');
       }
 
-      final planRef = userDoc.data()!['current_workout_plan'] as DocumentReference;
+      final planRef =
+      userDoc.data()!['current_workout_plan'] as DocumentReference;
       final planDoc = await planRef.get();
       if (!planDoc.exists) throw Exception('Workout plan not found');
 
@@ -97,21 +146,54 @@ class _UserWorkoutState extends State<UserWorkout> {
           (w) => w['day'] == _currentDay,
       orElse: () => {'exercises': []},
     );
-    _dailyExercises = List<Map<String, dynamic>>.from(workout['exercises'] ?? []);
-    _completedSets = {
-      for (var ex in _dailyExercises)
-        ex['name']: List<bool>.filled(ex['sets'] as int, false),
-    };
+    _dailyExercises =
+    List<Map<String, dynamic>>.from(workout['exercises'] ?? []);
+    // Only initialize _completedSets if not already restored
+    if (_completedSets.isEmpty) {
+      _completedSets = {
+        for (var ex in _dailyExercises)
+          ex['name']: List<bool>.filled(ex['sets'] as int, false),
+      };
+    }
   }
 
   void _startWorkout() {
     setState(() {
       _isWorkoutActive = true;
       _timerSeconds = 0;
-      widget.fabNotifier.value = null;
+      _completedSets = {
+        for (var ex in _dailyExercises)
+          ex['name']: List<bool>.filled(ex['sets'] as int, false),
+      };
+      fabNotifier.value = null;
     });
+    _startTimer();
+    // Save state to persistor
+    WorkoutStatePersistor().saveState(
+      isWorkoutActive: _isWorkoutActive,
+      timerSeconds: _timerSeconds,
+      completedSets: _completedSets,
+      currentDay: _currentDay,
+    );
+    debugPrint('UserWorkoutState: Workout started, timerSeconds=$_timerSeconds');
+  }
+
+  void _startTimer() {
+    _timer?.cancel(); // Cancel any existing timer
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _timerSeconds++);
+      if (mounted) {
+        setState(() {
+          _timerSeconds++;
+        });
+        // Save timer state to persistor
+        WorkoutStatePersistor().saveState(
+          isWorkoutActive: _isWorkoutActive,
+          timerSeconds: _timerSeconds,
+          completedSets: _completedSets,
+          currentDay: _currentDay,
+        );
+        debugPrint('UserWorkoutState: Timer tick, timerSeconds=$_timerSeconds');
+      }
     });
   }
 
@@ -119,6 +201,14 @@ class _UserWorkoutState extends State<UserWorkout> {
     setState(() {
       _completedSets[name]![idx] = true;
     });
+    // Save state to persistor
+    WorkoutStatePersistor().saveState(
+      isWorkoutActive: _isWorkoutActive,
+      timerSeconds: _timerSeconds,
+      completedSets: _completedSets,
+      currentDay: _currentDay,
+    );
+    debugPrint('UserWorkoutState: Set $idx completed for exercise $name');
   }
 
   bool _isExerciseCompleted(String name) {
@@ -161,12 +251,17 @@ class _UserWorkoutState extends State<UserWorkout> {
           .set(record);
 
       setState(() {
-        _currentDay = (_currentDay % (_currentPlan!['duration'] as int)) + 1;
+        _currentDay =
+            (_currentDay % (_currentPlan!['duration'] as int)) + 1;
         _isWorkoutActive = false;
         _timerSeconds = 0;
+        _completedSets = {};
         _updateDailyExercises();
         _updateFab();
       });
+      // Clear state in persistor
+      WorkoutStatePersistor().clearState();
+      debugPrint('UserWorkoutState: Workout stopped, day=$_currentDay');
     } catch (e) {
       setState(() {
         _errorMessage = 'Error saving workout: $e';
@@ -177,9 +272,9 @@ class _UserWorkoutState extends State<UserWorkout> {
 
   void _updateFab() {
     if (_isWorkoutActive || _isLoading || _errorMessage != null) {
-      widget.fabNotifier.value = null;
+      fabNotifier.value = null;
     } else {
-      widget.fabNotifier.value = FloatingActionButton(
+      fabNotifier.value = FloatingActionButton(
         onPressed: _startWorkout,
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.play_arrow, color: Colors.white),
@@ -196,11 +291,16 @@ class _UserWorkoutState extends State<UserWorkout> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
+
+    debugPrint(
+        'UserWorkoutState: build called, isWorkoutActive=$_isWorkoutActive, timerSeconds=$_timerSeconds');
+
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       floatingActionButton: ValueListenableBuilder<Widget?>(
-        valueListenable: widget.fabNotifier,
+        valueListenable: fabNotifier,
         builder: (_, fab, __) => fab ?? const SizedBox.shrink(),
       ),
       body: SafeArea(
@@ -210,7 +310,8 @@ class _UserWorkoutState extends State<UserWorkout> {
             ? Center(
           child: Text(
             _errorMessage!,
-            style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
+            style: theme.textTheme.bodyLarge
+                ?.copyWith(color:theme.colorScheme.error),
           ),
         )
             : Column(
@@ -219,20 +320,25 @@ class _UserWorkoutState extends State<UserWorkout> {
             if (_isWorkoutActive)
               Card(
                 color: theme.colorScheme.primaryContainer,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 margin: const EdgeInsets.all(16),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 16),
                   child: Center(
                     child: Text(
                       'Workout Time: ${_formatTimer(_timerSeconds)}',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
               child: Text(
                 'Day $_currentDay Workout',
                 style: theme.textTheme.headlineSmall,
@@ -240,7 +346,8 @@ class _UserWorkoutState extends State<UserWorkout> {
             ),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _dailyExercises.length,
                 itemBuilder: (context, idx) {
                   final ex = _dailyExercises[idx];
@@ -248,50 +355,79 @@ class _UserWorkoutState extends State<UserWorkout> {
                   final sets = ex['sets'] as int;
                   final reps = ex['reps'] as int;
                   final done = _isExerciseCompleted(name);
+
                   return Card(
                     elevation: 4,
                     shadowColor: Colors.black26,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    color: done ? theme.colorScheme.secondaryContainer : theme.colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    margin:
+                    const EdgeInsets.symmetric(vertical: 8),
+                    color: done
+                        ? theme.colorScheme.secondaryContainer
+                        : theme.colorScheme.surface,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   name,
-                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                                  style: theme.textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                      fontWeight:
+                                      FontWeight.w600),
                                 ),
                               ),
                               if (done)
-                                Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 28),
+                                Icon(Icons.check_circle,
+                                    color: theme
+                                        .colorScheme.primary,
+                                    size: 28),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '$sets sets of $reps reps',
-                            style: theme.textTheme.bodySmall,
+                            style:
+                            theme.textTheme.bodySmall,
                           ),
                           if (_isWorkoutActive && !done) ...[
                             const SizedBox(height: 12),
                             Wrap(
                               spacing: 8,
-                              children: List.generate(sets, (i) {
-                                final sel = _completedSets[name]![i];
+                              children: List.generate(
+                                  sets, (i) {
+                                final sel =
+                                _completedSets[name]![i];
                                 return ChoiceChip(
                                   label: Text('${i + 1}'),
                                   selected: sel,
-                                  onSelected: (_) => _markSetCompleted(name, i),
-                                  selectedColor: theme.colorScheme.primaryContainer,
-                                  backgroundColor: theme.colorScheme.surfaceVariant,
-                                  labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                                  onSelected: (_) =>
+                                      _markSetCompleted(
+                                          name, i),
+                                  selectedColor: theme
+                                      .colorScheme
+                                      .primaryContainer,
+                                  backgroundColor: theme
+                                      .colorScheme
+                                      .surfaceVariant,
+                                  labelStyle: theme.textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
                                     color: sel
-                                        ? theme.colorScheme.onPrimaryContainer
-                                        : theme.colorScheme.onSurfaceVariant,
+                                        ? theme
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                        : theme
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                                 );
                               }),
@@ -312,13 +448,19 @@ class _UserWorkoutState extends State<UserWorkout> {
                   child: ElevatedButton(
                     onPressed: _stopWorkout,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.error,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor:
+                      theme.colorScheme.error,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                     ),
                     child: Text(
                       'Stop Workout',
-                      style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onError),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(
+                          color: theme.colorScheme.onError),
                     ),
                   ),
                 ),
@@ -329,4 +471,3 @@ class _UserWorkoutState extends State<UserWorkout> {
     );
   }
 }
-
