@@ -9,6 +9,7 @@
 ///   Include this widget as a tab in the UserDashboard to give users access
 ///   to their activity trends and goals.
 /// """
+library;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 

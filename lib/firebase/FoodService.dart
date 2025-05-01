@@ -52,7 +52,7 @@ class FoodService {
           'Successfully populated database with ${sampleFoods.length} sample foods');
     } catch (e) {
       print('Error populating sample foods: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -75,7 +75,7 @@ class FoodService {
       await populateSampleFoods();
     } catch (e) {
       print('Error repopulating sample foods: $e');
-      throw e;
+      rethrow;
     }
   }
 

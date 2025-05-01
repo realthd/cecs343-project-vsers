@@ -1,6 +1,7 @@
 /// A Flutter widget for displaying a user's daily diet summary,
 /// including calorie intake, macronutrient breakdown, and a list of meals.
 ///
+library;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

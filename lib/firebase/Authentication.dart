@@ -153,7 +153,7 @@ class AuthenticationHelper {
       await prefs.clear();
 
       // Reset the isAdmin flag
-      this.isAdmin = false;
+      isAdmin = false;
     } catch (e) {
       print('Error signing out: $e');
     }

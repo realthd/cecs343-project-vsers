@@ -1,6 +1,7 @@
 /// A Flutter widget module that provides user profile settings and preferences, 
 /// including account management, notifications, privacy controls, theme options, and logout.
 /// 
+library;
 import 'package:flutter/material.dart';
 import 'package:vsers/authentication/LoginPage.dart';
 import 'package:vsers/firebase/Authentication.dart';

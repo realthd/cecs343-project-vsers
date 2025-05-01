@@ -1,6 +1,7 @@
 /// A Flutter widget module that serves as the main homepage for the user, 
 /// providing a central point for accessing user-specific content.
 /// 
+library;
 import 'package:flutter/material.dart';
 /// A stateless widget that displays the user's homepage content.
 /// 

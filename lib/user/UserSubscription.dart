@@ -10,6 +10,7 @@
 /// 
 /// Methods:
 /// - _selectPlan: A function that updates the user's subscription plan and displays a snack bar.
+library;
 import 'package:flutter/material.dart';
 
 class UserSubscription extends StatefulWidget {
